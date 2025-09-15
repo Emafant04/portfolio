@@ -9,6 +9,9 @@ public class GameBoard extends JPanel {
     private final int cols;
     private final int mines;
     private final Cell[][] grid;
+    private int totalSafeCells=0;
+    private int revealedSafeCells=0;
+
 
     public GameBoard(int rows, int cols, int mines) {
         this.rows = rows;
@@ -26,7 +29,7 @@ public class GameBoard extends JPanel {
                 int rr = r, cc = c;
                 cell.addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseClicked(MouseEvent e) {
+                    public void mousePressed(MouseEvent e) {
                         if (SwingUtilities.isLeftMouseButton(e)) {
                             reveal(rr, cc);
                         } else if (SwingUtilities.isRightMouseButton(e)) {
@@ -39,6 +42,10 @@ public class GameBoard extends JPanel {
 
         placeMines();
         calculateNeighbors();
+
+        // conta le celle sicure
+        totalSafeCells = rows * cols - mines;
+        revealedSafeCells = 0;
     }
 
     private void placeMines() {
@@ -80,10 +87,31 @@ public class GameBoard extends JPanel {
     
         if (cell.hasMine) {
             cell.setText("*");
-            JOptionPane.showMessageDialog(this, "Hai perso!");
-            revealAll();
-            return;
+            int scelta = JOptionPane.showOptionDialog(
+        this,
+        "Hai perso! Vuoi iniziare una nuova partita?",
+        "Game Over",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.INFORMATION_MESSAGE,
+        null,
+        new String[]{"Nuova partita", "Esci"},
+        "Nuova partita"
+        );
+
+        revealAll();
+
+        if (scelta == JOptionPane.YES_OPTION) {
+            SwingUtilities.getWindowAncestor(this).dispose(); // chiude la finestra attuale
+            Minesweeper.main(null); // riavvia il gioco
+        } else {
+            System.exit(0); // termina completamente
         }
+        return;
+
+
+        }
+        revealedSafeCells++;
+        checkWin();
     
         if (cell.neighborMines > 0) {
             cell.setText(String.valueOf(cell.neighborMines));
@@ -123,6 +151,29 @@ public class GameBoard extends JPanel {
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 if (grid[r][c].hasMine) grid[r][c].setText("*");
+            }
+        }
+    }
+    private void checkWin() {
+        if (revealedSafeCells == totalSafeCells) {
+            revealAll();
+
+            int scelta = JOptionPane.showOptionDialog(
+                this,
+                "Hai vinto! Vuoi iniziare una nuova partita?",
+                "Vittoria 🎉",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                new String[]{"Nuova partita", "Esci"},
+                "Nuova partita"
+            );
+
+            if (scelta == JOptionPane.YES_OPTION) {
+                SwingUtilities.getWindowAncestor(this).dispose();
+                Minesweeper.main(null);
+            } else {
+                System.exit(0);
             }
         }
     }
